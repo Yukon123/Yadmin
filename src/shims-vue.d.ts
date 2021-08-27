@@ -1,3 +1,4 @@
+///<reference types="vue/ref-macros" />
 /* eslint-disable */
 declare module '*.vue' {
   import type { DefineComponent } from 'vue'

@@ -11,73 +11,63 @@
   </div>
 </template>
 
-<script>
+<script lang="ts" setup>
+import { ref, inject } from 'vue'
+import { ElMessage } from 'element-plus'
+const axios: any = inject('axios')
+const merge = require('lodash.merge')
 import * as echarts from 'echarts'
-import _ from 'lodash'
-export default {
-  name: '',
-  components: {},
-  props: {},
-  data() {
-    return {
-      echartOptions: {},
-      options: {
-        title: {
-          text: '用户来源',
-        },
-        tooltip: {
-          trigger: 'axis',
-          axisPointer: {
-            type: 'cross',
-            label: {
-              backgroundColor: '#E9EEF3',
-            },
-          },
-        },
-        grid: {
-          left: '3%',
-          right: '4%',
-          bottom: '3%',
-          containLabel: true,
-        },
-        xAxis: [
-          {
-            boundaryGap: false,
-          },
-        ],
-        yAxis: [
-          {
-            type: 'value',
-          },
-        ],
+
+const echartOptions = ref({})
+const options = ref({
+  title: {
+    text: '用户来源',
+  },
+  tooltip: {
+    trigger: 'axis',
+    axisPointer: {
+      type: 'cross',
+      label: {
+        backgroundColor: '#E9EEF3',
       },
-    }
-  },
-  watch: {},
-  computed: {},
-  methods: {
-    initEcharts() {
-      console.log(echartOptions)
-      let myChart = echarts.init(document.getElementById('main'))
-      // 绘制图表
-      myChart.setOption(echartOptions)
-    },
-    async getEchartList() {
-      let { data: res } = await axios.get('reports/type/1')
-      console.log(res)
-      if (res.meta.status !== 200) {
-        return ElMessage.error('获取报表失败')
-      } else {
-        echartOptions = res.data
-        _.merge(echartOptions, options)
-      }
     },
   },
-  created() {},
-  async mounted() {
-    await getEchartList()
-    initEcharts()
+  grid: {
+    left: '3%',
+    right: '4%',
+    bottom: '3%',
+    containLabel: true,
   },
+  xAxis: [
+    {
+      boundaryGap: false,
+    },
+  ],
+  yAxis: [
+    {
+      type: 'value',
+    },
+  ],
+})
+
+const initEcharts = () => {
+  console.log(echartOptions)
+  let myChart = echarts.init(document.getElementById('main') as any)
+  // 绘制图表
+  myChart.setOption(echartOptions.value)
 }
+const getEchartList = async () => {
+  let { data: res } = await axios.get('reports/type/1')
+  console.log(res)
+  if (res.meta.status !== 200) {
+    return ElMessage.error('获取报表失败')
+  } else {
+    echartOptions.value = res.data
+    merge(echartOptions, options)
+  }
+}
+
+await getEchartList()
+initEcharts()
 </script>
 <style scoped></style>

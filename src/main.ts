@@ -10,6 +10,8 @@ import 'nprogress/nprogress.css'
 import './assets/css/base.css'
 import './assets/fonts/iconfont.css'
 
+import '@vueup/vue-quill/dist/vue-quill.snow.css'
+
 import App from './App.vue'
 import router from './router'
 
@@ -32,5 +34,6 @@ app
   .use(router)
   .use(ElementPlus, { size: 'small', zIndex: 3000 })
   .use(VueAxios, axios)
+
   .provide('axios', app.config.globalProperties.axios)
   .mount('#app')

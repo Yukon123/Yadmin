@@ -2,7 +2,7 @@
   <el-container class="home">
     <el-header>
       <div>
-        <img src="../assets/img/heima.png" alt="" />
+        <img src="../assets/img/logo.png" alt="" class="avatar" />
         <span>电商后台管理系统</span>
       </div>
       <el-button type="info" @click="logout">退出</el-button>
@@ -84,6 +84,9 @@ const logout = () => {
 <style scoped lang="less">
 .home {
   height: 100%;
+}
+.avatar {
+  height: 60px;
 }
 .el-header {
   background-color: rgb(54, 61, 64);

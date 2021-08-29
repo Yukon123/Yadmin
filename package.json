@@ -10,10 +10,13 @@
     "commit": "cz"
   },
   "dependencies": {
+    "@vueup/vue-quill": "^1.0.0-beta.7",
     "axios": "^0.21.1",
     "core-js": "^3.6.5",
+    "echarts": "^5.1.2",
     "element-plus": "^1.1.0-beta.5",
     "husky": "^7.0.2",
+    "lodash.merge": "^4.6.2",
     "nprogress": "^0.2.0",
     "vue": "^3.0.0",
     "vue-axios": "^3.2.5",
@@ -22,6 +25,7 @@
   "devDependencies": {
     "@commitlint/cli": "^13.1.0",
     "@commitlint/config-conventional": "^13.1.0",
+    "@types/lodash": "^4.14.172",
     "@types/nprogress": "^0.2.0",
     "@typescript-eslint/eslint-plugin": "^4.18.0",
     "@typescript-eslint/parser": "^4.18.0",

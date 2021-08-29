@@ -7,14 +7,11 @@ const User = () => import(/* webpackChunkName: "Users" */ '../components/user/Us
 const Roles = () => import(/* webpackChunkName: "Roles" */ '../components/power/Roles.vue')
 const Right = () => import(/* webpackChunkName: "Rights" */ '../components/power/Rights.vue')
 const Goods = () => import(/* webpackChunkName: "Goods" */ '../components/goods/Goods.vue')
-// const AddGoods = () =>
-//   import(/* webpackChunkName: "AddGoods" */ '../components/goods/AddGoods.vue')
+const AddGoods = () => import(/* webpackChunkName: "AddGoods" */ '../components/goods/AddGoods.vue')
 const Params = () => import(/* webpackChunkName: "Params" */ '../components/goods/Params.vue')
 const Categories = () => import(/* webpackChunkName: "Categories" */ '../components/goods/Categories.vue')
-// const Orders = () =>
-//   import(/* webpackChunkName: "Orders" */ '../components/orders/Orders.vue')
-// const Reports = () =>
-//   import(/* webpackChunkName: "Reports" */ '../components/reports/Reports.vue')
+const Orders = () => import(/* webpackChunkName: "Orders" */ '../components/orders/Orders.vue')
+const Reports = () => import(/* webpackChunkName: "Reports" */ '../components/reports/Reports.vue')
 const Login = () => import(/* webpackChunkName: "Login" */ '../components/Login.vue')
 
 const routes: Array<RouteRecordRaw> = [
@@ -51,6 +48,10 @@ const routes: Array<RouteRecordRaw> = [
         component: Goods,
       },
       {
+        path: '/goods/addgoods',
+        component: AddGoods,
+      },
+      {
         path: '/params',
         component: Params,
       },
@@ -58,18 +59,14 @@ const routes: Array<RouteRecordRaw> = [
         path: '/categories',
         component: Categories,
       },
-      //   {
-      //     path: '/orders',
-      //     component: Orders,
-      //   },
-      //   {
-      //     path: '/reports',
-      //     component: Reports,
-      //   },
-      //   {
-      //     path: '/goods/addgoods',
-      //     component: AddGoods,
-      //   },
+      {
+        path: '/orders',
+        component: Orders,
+      },
+      {
+        path: '/reports',
+        component: Reports,
+      },
     ],
   },
   {

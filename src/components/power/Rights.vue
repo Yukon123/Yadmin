@@ -22,33 +22,19 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: '',
-  components: {},
-  props: {},
-  data() {
-    return {
-      rightsList: [],
-    }
-  },
+<script setup lang="ts">
+import { ref, inject } from 'vue'
+import { ElMessage } from 'element-plus'
+const axios: any = inject('axios')
 
-  watch: {},
-  computed: {},
-  methods: {
-    async getRightsList() {
-      let { data: res } = await axios.get('rights/list')
-      if (res.meta.status !== 200) {
-        return ElMessage.error('获取权限列表失败!')
-      }
-      rightsList = res.data
-      console.log(rightsList)
-    },
-  },
-  created() {
-    getRightsList()
-  },
-  mounted() {},
+const rightsList = ref([])
+const getRightsList = async () => {
+  let { data: res } = await axios.get('rights/list')
+  if (res.meta.status !== 200) {
+    return ElMessage.error('获取权限列表失败!')
+  }
+  rightsList.value = res.data
 }
+getRightsList()
 </script>
 <style lang="less" scoped></style>

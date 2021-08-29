@@ -32,7 +32,7 @@ module.exports = {
     'no-undef': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
 
     'no-unused-vars': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
-
+    'vue/no-v-model-argument': 'off',
     '@typescript-eslint/no-var-requires': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',

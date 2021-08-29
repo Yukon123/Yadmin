@@ -30,15 +30,16 @@
                   :key="index"
                   closable
                   @close="closeTag(scope.row, index)"
-                  >{{ value }}</el-tag
-                >
+                  >{{ value }}
+                </el-tag>
                 <el-input
                   class="input-new-tag"
                   v-if="scope.row.isShowInput"
                   v-model="scope.row.inputValue"
                   ref="tagInputRef"
                   size="small"
-                  @keyup.enter.native="tagInputConfirm(scope.row)"
+                  autofocus
+                  @keyup.enter="tagInputConfirm(scope.row)"
                   @blur="tagInputConfirm(scope.row)"
                 >
                 </el-input>
@@ -79,7 +80,7 @@
                   v-model="scope.row.inputValue"
                   ref="tagInputRef"
                   size="small"
-                  @keyup.enter.native="tagInputConfirm(scope.row)"
+                  @keyup.enter="tagInputConfirm(scope.row)"
                   @blur="tagInputConfirm(scope.row)"
                 >
                 </el-input>
@@ -104,228 +105,227 @@
         </el-tab-pane>
       </el-tabs>
     </el-card>
-    <el-dialog :title="dialogTitle" v-model:visible="formVisible" width="50%" @close="colseForm">
+    <el-dialog :title="dialogTitle" v-model="formVisible" width="50%" @close="colseForm">
       <el-form :model="formData" :rules="addFormRules" ref="formRef" label-width="100px">
         <el-form-item :label="titleTail" prop="attr_name">
           <el-input v-model="formData['attr_name']"></el-input>
         </el-form-item>
       </el-form>
-      <span #"footer" class="dialog-footer">
-        <el-button @click="formVisible = false">取 消</el-button>
-        <el-button type="primary" @click="confirmForm">确 定</el-button>
-      </span>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="formVisible = false">取 消</el-button>
+          <el-button type="primary" @click="confirmForm">确 定</el-button>
+        </span>
+      </template>
     </el-dialog>
-    <!-- <el-dialog title="添加静态属性" :visible.sync="addOnlyDialogVisible" width="50%" @close="colseOnlyForm">
-      <el-form :model="addOnlyData" :rules="addOnlyRules" ref="addOnlyRef" label-width="100px">
-        <el-form-item label="静态属性" prop="only">
-          <el-input v-model="addOnlyData.value"></el-input>
-        </el-form-item>
-      </el-form>
-      <span #"footer" class="dialog-footer">
-        <el-button @click="addOnlyDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="confirmAddAttr">确 定</el-button>
-      </span>
-    </el-dialog> -->
   </div>
 </template>
 
-<script>
-export default {
-  name: '',
-  components: {},
-  props: {},
-  data() {
-    return {
-      casCateList: [],
-      casCartListProps: {
-        expandTrigger: 'hover',
-        value: 'cat_id',
-        label: 'cat_name',
-        children: 'children',
-      },
-      selectedKey: [],
-      activeTabName: 'many',
-      manyTableData: [],
-      onlyTableData: [],
-      formVisible: false,
-      formData: { attr_name: '', attr_sel: 'many', attr_vals: '' },
-      addFormRules: {
-        attr_name: [{ required: true, message: '请输入参数名称', trigger: 'blur' }],
-      },
-      attrId: 0,
-      cateId: 0,
-      titleHead: '',
-      editAbleTag: false,
-    }
-  },
-  watch: {},
-  computed: {
-    isDisabled() {
-      return selectedKey.length !== 3
-    },
-    titleTail() {
-      if (activeTabName === 'many') return '动态参数'
-      else return '静态属性'
-    },
-    dialogTitle() {
-      return titleHead + titleTail
-    },
-  },
-  methods: {
-    async getCateList() {
-      let { data: res } = await axios.get('categories')
-      if (res.meta.status !== 200) {
-        return ElMessage.error('获取分类数据失败')
-      }
-      console.log('级联选择项', res)
-      casCateList = res.data
-    },
+<script lang="ts" setup>
+import { ref, inject, computed, nextTick } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+const axios: any = inject('axios')
 
-    cascaderChange() {
+const casCartListProps = ref({
+  expandTrigger: 'hover',
+  value: 'cat_id',
+  label: 'cat_name',
+  children: 'children',
+})
+const addFormRules = ref({
+  attr_name: [{ required: true, message: '请输入参数名称', trigger: 'blur' }],
+})
+// 计算属性
+const isDisabled = computed(() => {
+  return selectedKey.value.length !== 3
+})
+const titleTail = computed(() => {
+  if (activeTabName.value === 'many') return '动态参数'
+  else return '静态属性'
+})
+const dialogTitle = computed(() => {
+  return titleHead.value + titleTail.value
+})
+
+// 级联选择框分类
+const casCateList = ref([])
+const getCateList = async () => {
+  let { data: res } = await axios.get('categories').catch((err: any) => err)
+  if (res.meta.status !== 200) {
+    return ElMessage.error('获取分类数据失败')
+  }
+  casCateList.value = res.data
+}
+getCateList()
+const cascaderChange = () => {
+  getParamsList()
+}
+const activeTabName = ref('many')
+const tabsClick = () => {
+  formData.value.attr_sel = activeTabName.value
+  getParamsList()
+}
+
+// 获取参数列表
+const attrId = ref(0)
+const selectedKey = ref([])
+const manyTableData = ref([])
+const onlyTableData = ref([])
+const getParamsList = async () => {
+  if (selectedKey.value.length !== 3) {
+    selectedKey.value = []
+    manyTableData.value = []
+    onlyTableData.value = []
+    return
+  }
+  attrId.value = selectedKey.value[selectedKey.value.length - 1]
+  let { data: res } = await axios
+    .get(`categories/${attrId.value}/attributes`, {
+      params: { sel: activeTabName.value },
+    })
+    .catch((err: any) => err)
+  console.log('获取动静态参数列表', res)
+  if (res.meta.status !== 200) {
+    return ElMessage.error('获取参数信息失败')
+  }
+  res.data.forEach((item: any) => {
+    item.attr_vals = item.attr_vals ? item.attr_vals.split(',') : []
+    item.isShowInput = false
+    item.inputValue = ''
+  })
+  if (activeTabName.value === 'many') {
+    manyTableData.value = res.data
+  } else {
+    onlyTableData.value = res.data
+  }
+}
+
+// 编辑参数
+const cateId = ref(0)
+const titleHead = ref('')
+const editAbleTag = ref(false)
+const formData = ref({ attr_name: '', attr_sel: 'many', attr_vals: '' })
+const formVisible = ref(false)
+const editParams = async (params: any) => {
+  let { data: res } = await axios
+    .get(`categories/${params.cat_id}/attributes/${params.attr_id}`)
+    .catch((err: any) => err)
+  if (res.meta.status !== 200) {
+    return ElMessage.error('获取参数名称失败')
+  }
+  formData.value.attr_name = res.data.attr_name
+  titleHead.value = '修改'
+  formVisible.value = true
+  cateId.value = params.cat_id
+  attrId.value = params.attr_id
+  editAbleTag.value = true
+}
+
+// 删除参数
+const deleteParams = async (params: any) => {
+  cateId.value = params.cat_id
+  attrId.value = params.attr_id
+  let tag = await ElMessageBox.confirm('此操作将永久删除该参数, 是否继续?', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  }).catch((err) => err)
+  if (tag !== 'confirm') {
+    ElMessage.info('取消删除参数')
+  } else {
+    let { data: res } = await axios
+      .delete(`categories/${cateId.value}/attributes/${attrId.value}`)
+      .catch((err: any) => err)
+    if (res.meta.status !== 200) {
+      return ElMessage.error('删除参数失败')
+    } else {
+      ElMessage.success('删除参数成功')
       getParamsList()
-    },
-    tabsClick() {
-      formData.attr_sel = activeTabName
-      console.log(formData.attr_sel)
+    }
+  }
+}
+
+// 增加参数
+const formRef: any = ref(null)
+const addForm = () => {
+  titleHead.value = '添加'
+  formVisible.value = true
+}
+const confirmForm = () => {
+  formRef.value.validate(async (valid: any) => {
+    if (!valid) {
+      return ElMessage.info(`请输入${titleTail}`)
+    } else if (!editAbleTag.value) {
+      let { data: res } = await axios
+        .post(`categories/${attrId.value}/attributes`, formData.value)
+        .catch((err: any) => err)
+      console.log('添加参数', res)
+      if (res.meta.status !== 201) {
+        return ElMessage.error('添加参数失败')
+      } else ElMessage.success('添加参数成功')
       getParamsList()
-    },
-    async getParamsList() {
-      if (selectedKey.length !== 3) {
-        selectedKey = []
-        manyTableData = []
-        onlyTableData = []
-        return
-      }
-      attrId = selectedKey[selectedKey.length - 1]
-      let { data: res } = await axios.get(`categories/${attrId}/attributes`, {
-        params: { sel: activeTabName },
-      })
+      formVisible.value = false
+    } else {
+      let { data: res } = await axios
+        .put(`categories/${cateId.value}/attributes/${attrId.value}`, formData.value)
+        .catch((err: any) => err)
       if (res.meta.status !== 200) {
-        return ElMessage.error('获取参数信息失败')
-      }
-      console.log('改造前', JSON.parse(JSON.stringify(res.data)))
-      console.log('改造后', res.data)
-      res.data.forEach((item) => {
-        item.attr_vals = item.attr_vals ? item.attr_vals.split(',') : []
-        item.isShowInput = false
-        item.inputValue = ''
-      })
-      if (activeTabName === 'many') {
-        manyTableData = res.data
-      } else {
-        onlyTableData = res.data
-      }
-    },
-    async editParams(params) {
-      let { data: res } = await axios.get(`categories/${params.cat_id}/attributes/${params.attr_id}`)
-      if (res.meta.status !== 200) {
-        return ElMessage.error('获取参数名称失败')
-      }
-      formData.attr_name = res.data.attr_name
-      titleHead = '修改'
-      formVisible = true
-      cateId = params.cat_id
-      attrId = params.attr_id
-      editAbleTag = true
-    },
-    async deleteParams(params) {
-      cateId = params.cat_id
-      attrId = params.attr_id
-      let tag = await ElMessageBox.confirm('此操作将永久删除该参数, 是否继续?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }).catch((err) => err)
-      if (tag !== 'confirm') {
-        ElMessage.info('取消删除参数')
-      } else {
-        let { data: res } = await axios.delete(`categories/${cateId}/attributes/${attrId}`)
-        console.log(res)
-        if (res.meta.status !== 200) {
-          return ElMessage.error('删除参数失败')
-        } else {
-          ElMessage.success('删除参数成功')
-          getParamsList()
-        }
-      }
-    },
-    addForm() {
-      titleHead = '添加'
-      formVisible = true
-    },
-    confirmForm() {
-      .formRef.validate(async (valid) => {
-        if (!valid) {
-          return ElMessage.info(`请输入${titleTail}`)
-        } else if (!editAbleTag) {
-          console.log(JSON.parse(JSON.stringify(formData)))
-          let { data: res } = await axios.post(`categories/${attrId}/attributes`, formData)
-          console.log(res)
-          if (res.meta.status !== 201) {
-            return ElMessage.error('添加参数失败')
-          } else ElMessage.success('添加参数成功')
-          getParamsList()
-          formVisible = false
-        } else {
-          let { data: res } = await axios.put(`categories/${cateId}/attributes/${attrId}`, formData)
-          console.log(res)
-          if (res.meta.status !== 200) {
-            return ElMessage.error('编辑参数失败')
-          } else ElMessage.success('编辑参数成功')
-          getParamsList()
-          editAbleTag = false
-          formVisible = false
-        }
-      })
-    },
-    colseForm() {
-      .formRef.resetFields()
-      editAbleTag = false
-    },
-    async putAttrVal(row) {
-      let stringVar = row.attr_vals.join()
-      console.log('上传参数为字符串', stringVar)
-      let { data: res } = await axios.put(`categories/${row.cat_id}/attributes/${row.attr_id}`, {
-        attr_name: row.attr_name,
-        attr_sel: row.attr_sel,
-        attr_vals: row.attr_vals.join(),
-      })
-      console.log('修改的结果', res)
-      if (res.meta.status !== 200) {
-        row.isShowInput = false
-        return ElMessage.error('修改参数项失败')
-      }
-      ElMessage.success('修改参数项成功')
-    },
-    tagInputConfirm(row) {
-      if (row.inputValue.trim().length === 0) {
-        row.isShowInput = false
-        row.inputValue = ''
-        return
-      }
-      row.attr_vals.push(row.inputValue)
-      putAttrVal(row)
-      row.inputValue = ''
-      row.isShowInput = false
-    },
-    showInput(row) {
-      row.isShowInput = true
-      $nextTick(() => {
-        .tagInputRef.$refs.input.focus()
-      })
-    },
-    closeTag(row, index) {
-      row.attr_vals.splice(index, 1)
-      putAttrVal(row)
-    },
-  },
-  created() {
-    getCateList()
-  },
-  mounted() {},
+        return ElMessage.error('编辑参数失败')
+      } else ElMessage.success('编辑参数成功')
+      getParamsList()
+      editAbleTag.value = false
+      formVisible.value = false
+    }
+  })
+}
+const colseForm = () => {
+  formRef.value.resetFields()
+  editAbleTag.value = false
+}
+
+// 修改属性值
+const putAttrVal = async (row: any) => {
+  let { data: res } = await axios
+    .put(`categories/${row.cat_id}/attributes/${row.attr_id}`, {
+      attr_name: row.attr_name,
+      attr_sel: row.attr_sel,
+      attr_vals: row.attr_vals.join(),
+    })
+    .catch((err: any) => err)
+  console.log(res)
+  if (res.meta.status !== 200) {
+    row.isShowInput = false
+    return ElMessage.error('修改参数项失败')
+  }
+  ElMessage.success('修改参数项成功')
+}
+
+const tagInputConfirm = (row: any) => {
+  if (row.inputValue.trim().length === 0) {
+    row.isShowInput = false
+    row.inputValue = ''
+    return
+  }
+  row.attr_vals.push(row.inputValue)
+  putAttrVal(row)
+  row.inputValue = ''
+  row.isShowInput = false
+}
+
+const tagInputRef: any = ref(1)
+const showInput = async (row: any) => {
+  console.log('click')
+  row.isShowInput = true
+  await nextTick().catch((err: any) => console.log(err))
+  console.log(tagInputRef)
+  tagInputRef.value.focus()
+}
+const closeTag = (row: any, index: string | number | symbol) => {
+  row.attr_vals.splice(index, 1)
+  putAttrVal(row)
 }
 </script>
-<style scoped>
+<style scoped lang="less">
 .el-alert {
   margin-bottom: 15px;
 }

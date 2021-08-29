@@ -9,7 +9,9 @@
       <el-row :gutter="20">
         <el-col :span="8">
           <el-input placeholder="请输入内容" v-model="getGoodsParams.query" clearable autofocus="true">
-            <el-button #"append" icon="el-icon-search" @click="searchGoods"></el-button> </el-input
+            <template #append>
+              <el-button icon="el-icon-search" @click="searchGoods"></el-button>
+            </template> </el-input
         ></el-col>
         <el-col :span="4">
           <el-button type="primary" @click="goAddPage">添加商品</el-button>
@@ -38,114 +40,106 @@
       >
       </el-pagination>
     </el-card>
-    <el-dialog title="预览图片" v-model:visible="priviewShow" width="50%" @close="closePreview">
+    <el-dialog title="预览图片" v-model="priviewShow" width="50%" @close="closePreview">
       <img :src="priviewURL" alt="" />
     </el-dialog>
   </div>
 </template>
 
-<script>
-import { formatDate } from '@/common/regDate'
-export default {
-  name: '',
-  components: {},
-  props: {},
-  data() {
-    return {
-      goodsList: [],
-      getGoodsParams: {
-        query: '',
-        pagenum: 1,
-        pagesize: 10,
-      },
-      totalPage: 0,
-      priviewShow: false,
-      priviewURL: '',
-    }
-  },
-  watch: {},
-  computed: {},
-  methods: {
-    closePreview() {
-      priviewShow = false
-      priviewURL = ''
-    },
-    async getGoodsList() {
-      let { data: res } = await axios.get('goods', {
-        params: getGoodsParams,
-      })
-      if (res.meta.status !== 200) {
-        return ElMessage.error('获取商品列表数据失败')
-      } else {
-        res.data.goods.forEach((item) => {
-          item.add_time = formatTime(item.add_time)
-        })
-        totalPage = res.data.total
-        goodsList = res.data.goods
-        // console.log("商品列表,"goodsList)
-      }
-    },
-    formatTime(time) {
-      var date = new Date(time)
-      return formatDate(date, 'yyyy-MM-dd hh:mm:ss')
-    },
-    paginSizeChange(size) {
-      getGoodsParams.pagesize = size
-      getGoodsList()
-    },
-    paginCurrentChange(page) {
-      getGoodsParams.pagenum = page
-      getGoodsList()
-    },
-    searchGoods() {
-      console.log('4444', getGoodsParams.query)
-      if (!getGoodsParams.query) {
-        return
-      }
-      console.log('1111')
-      console.log(getGoodsParams.query.trim())
-      getGoodsParams.query.trim()
-      getGoodsList()
-    },
-    async deleteGoods(row) {
-      console.log(row)
-      console.log(row.goods_id)
-      let result = await ElMessageBox.confirm('此操作将永久删除该商品, 是否继续?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }).catch((err) => err)
-      if (result !== 'confirm') {
-        ElMessage.info('已取消删除')
-      } else {
-        let { data: res } = await axios.delete('goods/' + row.goods_id)
-        console.log(res)
-        if (res.meta.status !== 200) {
-          return ElMessage.error('删除商品失败')
-        } else {
-          ElMessage.success('删除商品成功')
-          getGoodsList()
-        }
-      }
-    },
-    async editGoods(row) {
-      console.log(row)
-      let { data: res } = await axios.get('goods/' + row.goods_id)
-      console.log(res)
-      priviewURL = res.data.pics[0].pics_mid_url
-      console.log(priviewURL)
-      priviewShow = true
-    },
-    goAddPage() {
-      $router.push('/goods/addgoods')
-    },
-  },
-  created() {
-    $nextTick(() => {
-      getGoodsList()
+<script lang="ts" setup>
+import router from '@/router/index'
+import { ref, inject } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { formatDate } from '@/common/regDate.js'
+const axios: any = inject('axios')
+
+// 跳到添加页面
+const goAddPage = () => {
+  router.push('/goods/addgoods')
+}
+
+// 获取商品列表
+const goodsList = ref([])
+const totalPage = ref(0)
+const getGoodsParams = ref({
+  query: '',
+  pagenum: 1,
+  pagesize: 10,
+})
+const getGoodsList = async () => {
+  let { data: res } = await axios
+    .get('goods', {
+      params: getGoodsParams.value,
     })
-  },
-  mounted() {},
+    .catch((err: any) => err)
+  if (res.meta.status !== 200) {
+    return ElMessage.error('获取商品列表数据失败')
+  } else {
+    res.data.goods.forEach((item: any) => {
+      item.add_time = formatTime(item.add_time)
+    })
+    totalPage.value = res.data.total
+    goodsList.value = res.data.goods
+  }
+}
+getGoodsList()
+
+// 页码跳转
+const paginSizeChange = (size: number) => {
+  getGoodsParams.value.pagesize = size
+  getGoodsList()
+}
+const paginCurrentChange = (page: number) => {
+  getGoodsParams.value.pagenum = page
+  getGoodsList()
+}
+
+// 格式化时间
+const formatTime = (time: string) => {
+  const date = new Date(time)
+  return formatDate(date, 'yyyy-MM-dd hh:mm:ss')
+}
+
+// 删除编辑商品
+const priviewShow = ref(false)
+const priviewURL = ref('')
+const closePreview = () => {
+  priviewShow.value = false
+  priviewURL.value = ''
+}
+const searchGoods = () => {
+  if (!getGoodsParams.value.query) {
+    return
+  }
+
+  getGoodsParams.value.query.trim()
+  getGoodsList()
+}
+const deleteGoods = async (row: any) => {
+  let result = await ElMessageBox.confirm('此操作将永久删除该商品, 是否继续?', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  }).catch((err) => err)
+  if (result !== 'confirm') {
+    ElMessage.info('已取消删除')
+  } else {
+    let { data: res } = await axios.delete('goods/' + row.goods_id).catch((err: any) => err)
+
+    if (res.meta.status !== 200) {
+      return ElMessage.error('删除商品失败')
+    } else {
+      ElMessage.success('删除商品成功')
+      getGoodsList()
+    }
+  }
+}
+const editGoods = async (row: any) => {
+  let { data: res } = await axios.get('goods/' + row.goods_id).catch((err: any) => err)
+
+  priviewURL.value = res.data.pics[0].pics_mid_url
+
+  priviewShow.value = true
 }
 </script>
 <style scoped></style>

@@ -9,8 +9,8 @@
       <el-col><el-button type="primary" @click="addDialogVisible = true">添加角色</el-button></el-col>
     </el-row>
     <el-table :data="rolesList" border style="width: 100%" stripe="">
-      <el-table-column type="expand" #default="scope">
-        <template>
+      <el-table-column type="expand">
+        <template #default="scope">
           <el-row
             v-for="(item1, i1) in scope.row.children"
             :key="item1.id"
@@ -59,7 +59,7 @@
         >
       </el-table-column>
     </el-table>
-    <el-dialog title="分配权限" v-model:visible="roleDialogVisible" width="50%">
+    <el-dialog title="分配权限" v-model="roleDialogVisible" width="50%">
       <el-tree
         :data="rightList"
         :props="treeProps"
@@ -69,12 +69,14 @@
         :default-checked-keys="defKey"
         ref="treeRef"
       ></el-tree>
-      <span #"footer" class="dialog-footer">
-        <el-button @click="roleDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="confirmDistRight(currentUserId)">确 定</el-button>
-      </span>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="roleDialogVisible = false">取 消</el-button>
+          <el-button type="primary" @click="confirmDistRight(currentUserId)">确 定</el-button>
+        </span>
+      </template>
     </el-dialog>
-    <el-dialog title="添加角色" v-model:visible="addDialogVisible" width="50%" @close="addDialogClose">
+    <el-dialog title="添加角色" v-model="addDialogVisible" width="50%" @close="addDialogClose">
       <el-form :model="addRoleForm" :rules="addFormRule" ref="addFormRef" label-width="90px" status-icon>
         <el-form-item label="用户名" prop="roleName">
           <el-input v-model="addRoleForm.roleName"></el-input>
@@ -83,12 +85,14 @@
           <el-input v-model="addRoleForm.roleDesc"></el-input>
         </el-form-item>
       </el-form>
-      <span #"footer" class="dialog-footer">
-        <el-button @click="addDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="addRoles">确 定</el-button>
-      </span>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="addDialogVisible = false">取 消</el-button>
+          <el-button type="primary" @click="addRoles">确 定</el-button>
+        </span>
+      </template>
     </el-dialog>
-    <el-dialog title="编辑角色" v-model:visible="editorDialogVisible" width="50%" @close="editDialogClose">
+    <el-dialog title="编辑角色" v-model="editorDialogVisible" width="50%" @close="editDialogClose">
       <el-form :model="editForm" :rules="editFormRule" ref="editFormRef" label-width="90px" status-icon>
         <el-form-item label="角色名称" prop="roleName">
           <el-input v-model="editForm.roleName"></el-input>
@@ -97,178 +101,190 @@
           <el-input v-model="editForm.roleDesc"></el-input>
         </el-form-item>
       </el-form>
-      <span #"footer" class="dialog-footer">
-        <el-button @click="editorDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="editUsers">确 定</el-button>
-      </span>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="editorDialogVisible = false">取 消</el-button>
+          <el-button type="primary" @click="editUsers">确 定</el-button>
+        </span>
+      </template>
     </el-dialog>
   </div>
 </template>
 
-<script>
-export default {
-  name: 'Roles',
-  components: {},
-  props: {},
-  data() {
-    return {
-      rolesList: [],
-      roleDialogVisible: false,
-      rightList: [],
-      treeProps: {
-        children: 'children',
-        label: 'authName',
-      },
-      defKey: [],
-      currentUserId: 0,
-      addRoleForm: { roleName: '', roleDesc: '' },
-      addDialogVisible: false,
-      addFormRule: {
-        roleName: [
-          { required: true, message: '请输入用户名', trigger: 'blur' },
-          { min: 1, max: 8, message: '长度在 1 到 8 个字符', trigger: 'blur' },
-        ],
-        roleDesc: [
-          { required: true, message: '请输入角色描述', trigger: 'blur' },
-          { min: 1, max: 8, message: '长度在 1 到 8 个字符', trigger: 'blur' },
-        ],
-      },
-      editForm: { roleName: '', roleDesc: '' },
-      editorDialogVisible: false,
-      editFormRule: {
-        roleName: [
-          { required: true, message: '请输入用户名', trigger: 'blur' },
-          { min: 1, max: 8, message: '长度在 1 到 8 个字符', trigger: 'blur' },
-        ],
-        roleDesc: [
-          { required: true, message: '请输入角色描述', trigger: 'blur' },
-          { min: 1, max: 8, message: '长度在 1 到 8 个字符', trigger: 'blur' },
-        ],
-      },
+<script setup lang="ts">
+import { ref, inject } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+const axios: any = inject('axios')
+
+// 获取角色列表
+const rolesList = ref([
+  {
+    id: 0,
+    roleName: '',
+    roleDesc: '',
+    children: [] as any[],
+  },
+])
+const getRolesList = async () => {
+  const { data: res } = await axios.get('roles').catch((err: any) => err)
+  if (res.meta.status !== 200) {
+    return ElMessage.error('获取角色列表失败')
+  }
+  rolesList.value = res.data
+}
+getRolesList()
+
+// expand列表
+const removeRightById = async (role: any, rightId: number) => {
+  let result = await ElMessageBox.confirm('此操作将永久删除该权限, 是否继续?', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  }).catch((err) => err)
+  if (result !== 'confirm') {
+    return ElMessage.info('取消了删除')
+  }
+  let { data: res } = await axios.delete(`roles/${role.id}/rights/${rightId}`).catch((err: any) => err)
+  if (res.meta.status !== 200) ElMessage.error('删除权限失败')
+  else ElMessage.success('删除权限成功')
+  role.children = res.data
+}
+
+// 添加角色
+const addRoleForm = ref({ roleName: '', roleDesc: '' })
+const addFormRef = ref(null) as any
+const addDialogVisible = ref(false)
+const addFormRule = ref({
+  roleName: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 1, max: 8, message: '长度在 1 到 8 个字符', trigger: 'blur' },
+  ],
+  roleDesc: [
+    { required: true, message: '请输入角色描述', trigger: 'blur' },
+    { min: 1, max: 8, message: '长度在 1 到 8 个字符', trigger: 'blur' },
+  ],
+})
+const addDialogClose = () => {
+  addFormRef.value.resetFields()
+}
+const addRoles = async () => {
+  const { data: res } = await axios.post('/roles', addRoleForm.value).catch((err: any) => err)
+  if (res.meta.status !== 201) {
+    return ElMessage.error(res.meta.msg)
+  }
+  res.data.children = []
+  res.data.id = res.data.roleId
+  getRolesList()
+  addDialogVisible.value = false
+}
+
+// 编辑角色
+const editForm = ref({ roleName: '', roleDesc: '', roleId: 0 })
+const editFormRef = ref(null) as any
+const editorDialogVisible = ref(false)
+const editFormRule = ref({
+  roleName: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 1, max: 8, message: '长度在 1 到 8 个字符', trigger: 'blur' },
+  ],
+  roleDesc: [
+    { required: true, message: '请输入角色描述', trigger: 'blur' },
+    { min: 1, max: 8, message: '长度在 1 到 8 个字符', trigger: 'blur' },
+  ],
+})
+const editDialogClose = () => {
+  editFormRef.value.resetFields()
+}
+const doEditForm = async (id: number) => {
+  const { data: res } = await axios.get('roles/' + id).catch((err: any) => err)
+  if (res.meta.status !== 200) return ElMessage.error('查询角色失败')
+  editorDialogVisible.value = true
+  editForm.value = res.data
+}
+const editUsers = () => {
+  editFormRef.value.validate(async (valid: any) => {
+    if (valid) {
+      const { data: res } = await axios.put('roles/' + editForm.value.roleId, editForm.value).catch((err: any) => err)
+      console.log('修改结果', res)
+      if (res.meta.status !== 200) return ElMessage.warning('更新角色失败')
+      else {
+        ElMessage.success('更新角色成功')
+        getRolesList()
+        editorDialogVisible.value = false
+      }
     }
+  })
+}
+
+//分配权限
+const defKey = ref([])
+const rightList = ref([
+  {
+    id: 0,
+    authName: '',
+    level: '',
+    pid: 0,
+    path: null,
   },
-  watch: {},
-  computed: {},
-  methods: {
-    async getRolesList() {
-      const { data: res } = await axios.get('roles')
-      if (res.meta.status !== 200) {
-        return ElMessage.error('获取角色列表失败')
-      }
-      rolesList = res.data
-      console.log(rolesList)
-    },
-    async removeRightById(role, rightId) {
-      let result = await ElMessageBox.confirm('此操作将永久删除该权限, 是否继续?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }).catch((err) => err)
-      if (result !== 'confirm') {
-        return ElMessage.info('取消了删除')
-      }
-      //const { data: reu } = await axios.delete('roles/' + roleId + '/rights/' + rightId)
-      let { data: res } = await axios.delete(`roles/${role.id}/rights/${rightId}`)
-      if (res.meta.status !== 200) ElMessage.error('删除权限失败')
-      else ElMessage.success('删除权限成功')
-      console.log(res)
-      role.children = res.data
-      console.log('确认了删除')
-    },
-    getNodeKey(node, arr) {
-      if (!node.children) {
-        return arr.push(node.id)
-      }
-      node.children.forEach((item) => {
-        getNodeKey(item, arr)
-      })
-    },
-    async distUserRights(role) {
-      currentUserId = role.id
-      let { data: res } = await axios.get('rights/tree')
-      if (res.meta.status !== 200) {
-        return ElMessage.error('获取权限列表失败')
-      }
-      rightList = res.data
-      defKey = []
-      console.log(currentUserId)
-      getNodeKey(role, defKey)
-      roleDialogVisible = true
-    },
-    async confirmDistRight(id) {
-      let keys = [....treeRef.getCheckedKeys(), ....treeRef.getHalfCheckedKeys()]
-      let keyStr = keys.join()
-      let { data: res } = await axios.post(`roles/${id}/rights`, {
-        rids: keyStr,
-      })
-      if (res.meta.status !== 200) {
-        return ElMessage.error('分配权限失败')
-      }
+])
+const currentUserId = ref(0)
+const treeRef = ref(null) as any
+const treeProps = ref({
+  children: 'children',
+  label: 'authName',
+})
+const roleDialogVisible = ref(false)
+const getNodeKey = (node: any, arr: number[]) => {
+  if (!node.children) {
+    return arr.push(node.id)
+  }
+  node.children.forEach((item: any) => {
+    getNodeKey(item, arr)
+  })
+}
+const distUserRights = async (role: any) => {
+  currentUserId.value = role.id
+  let { data: res } = await axios.get('rights/tree').catch((err: any) => err)
+  if (res.meta.status !== 200) {
+    return ElMessage.error('获取权限列表失败')
+  }
+  rightList.value = res.data
+  defKey.value = []
+  getNodeKey(role, defKey.value)
+  roleDialogVisible.value = true
+}
+const confirmDistRight = async (id: number) => {
+  let keys = [...treeRef.value.getCheckedKeys(), ...treeRef.value.getHalfCheckedKeys()]
+  let keyStr = keys.join()
+  let { data: res } = await axios
+    .post(`roles/${id}/rights`, {
+      rids: keyStr,
+    })
+    .catch((err: any) => err)
+  if (res.meta.status !== 200) {
+    return ElMessage.error('分配权限失败')
+  }
+  getRolesList()
+  roleDialogVisible.value = false
+  ElMessage.success('分配权限成功')
+}
+
+// 删除角色
+const deleteRole = (id: number) => {
+  ElMessageBox.confirm('此操作将永久删除该角色, 是否继续?', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  })
+    .then(async () => {
+      const { data: res } = await axios.delete('roles/' + id).catch((err: any) => err)
+      if (res.meta.status !== 200) return ElMessage.error('删除失败')
+      else ElMessage({ type: 'success', message: '删除成功!' })
       getRolesList()
-      roleDialogVisible = false
-      ElMessage.success('分配权限成功')
-    },
-    addDialogClose() {
-      .addFormRef.resetFields()
-    },
-    editDialogClose() {
-      .editFormRef.resetFields()
-    },
-    async addRoles() {
-      const { data: res } = await axios.post('/roles', addRoleForm)
-      if (res.meta.status !== 201) {
-        return ElMessage.error(res.meta.msg)
-      }
-      res.data.children = []
-      res.data.id = res.data.roleId
-      // rolesList.push(res.data)
-      console.log(rolesList)
-      getRolesList()
-      addDialogVisible = false
-      // rolesList = res.data
-    },
-    deleteRole(id) {
-      ElMessageBox.confirm('此操作将永久删除该角色, 是否继续?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      })
-        .then(async () => {
-          const { data: res } = await axios.delete('roles/' + id)
-          console.log('删除用户', res)
-          if (res.meta.status !== 200) return ElMessage.error('删除失败')
-          else ElMessage({ type: 'success', message: '删除成功!' })
-          getRolesList()
-        })
-        .catch(() => {
-          ElMessage({ type: 'info', message: '已取消删除' })
-        })
-    },
-    async doEditForm(id) {
-      const { data: res } = await axios.get('roles/' + id)
-      if (res.meta.status !== 200) return ElMessage.error('查询角色失败')
-      editorDialogVisible = true
-      editForm = res.data
-    },
-    editUsers() {
-      .editFormRef.validate(async (valid) => {
-        if (valid) {
-          const { data: res } = await axios.put('roles/' + editForm.roleId, editForm)
-          console.log('修改结果', res)
-          if (res.meta.status !== 200) return ElMessage.warning('更新角色失败')
-          else {
-            ElMessage.success('更新角色成功')
-            getRolesList()
-            editorDialogVisible = false
-          }
-        }
-      })
-    },
-  },
-  created() {
-    getRolesList()
-  },
-  mounted() {},
+    })
+    .catch(() => {
+      ElMessage({ type: 'info', message: '已取消删除' })
+    })
 }
 </script>
 <style scoped lang="less">

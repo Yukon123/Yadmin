@@ -82,7 +82,7 @@
         </span>
       </template>
     </el-dialog>
-    <el-dialog title="查询用户" v-model="editorDialogVisible" width="30%" @close="editDialogClose">
+    <el-dialog title="编辑用户" v-model="editorDialogVisible" width="30%" @close="editDialogClose">
       <el-form :model="editForm" :rules="editFormRule" ref="editFormRef" label-width="70px" status-icon>
         <el-form-item label="用户名" prop="username">
           <el-input v-model="editForm.username" disabled></el-input>
@@ -107,11 +107,9 @@
         <div>当前的角色:{{ userInfo.role_name }}</div>
         <div>
           分配新角色
-          <template>
-            <el-select v-model="selectedRoleId" placeholder="请选择新角色">
-              <el-option v-for="item in roleList" :key="item.id" :label="item.roleName" :value="item.id"> </el-option>
-            </el-select>
-          </template>
+          <el-select v-model="selectedRoleId" placeholder="请选择新角色">
+            <el-option v-for="item in roleList" :key="item.id" :label="item.roleName" :value="item.id"> </el-option>
+          </el-select>
         </div>
       </div>
       <template #footer>
@@ -128,7 +126,8 @@
 import { ref, inject, Ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 const axios: any = inject('axios')
-//校验函数
+
+// 校验函数
 const validatePass = (rule: any, value: string | number, callback: any) => {
   if (value === '') {
     callback(new Error('请输入密码'))
@@ -148,6 +147,7 @@ const validatePass2 = (rule: any, value: string, callback: any) => {
     callback()
   }
 }
+
 // 手机校验
 const checkPhone = (rule: any, value: string, callback: any) => {
   var phone = value.replace(/\s/g, '') // 去除空格
@@ -157,6 +157,7 @@ const checkPhone = (rule: any, value: string, callback: any) => {
     callback([new Error('手机号输入不合法')])
   } else callback()
 }
+
 // 邮箱校验
 const checkEmail = (rule: any, value: string, callback: any) => {
   const regEmail = /^([a-zA-Z]|[0-9])(\w)+@[a-zA-Z0-9]+\.([a-zA-Z]{2,4})$/
@@ -165,7 +166,7 @@ const checkEmail = (rule: any, value: string, callback: any) => {
   } else callback()
 }
 
-//获取用户列表
+// 获取用户列表
 const paramsList = ref({
   query: '',
   pagenum: 1,
@@ -183,7 +184,6 @@ const getUserList = async () => {
   userList.value = res.data.users
   total.value = res.data.total
 }
-getUserList()
 const handleSizeChange = (size: number) => {
   paramsList.value.pagesize = size
   getUserList()
@@ -192,8 +192,9 @@ const handleCurrentChange = (page: number) => {
   paramsList.value.pagenum = page
   getUserList()
 }
+getUserList()
 
-//增加表格
+// 添加用户
 const addForm = ref({
   username: '',
   password: '',
@@ -232,7 +233,7 @@ const addDialogClose = () => {
 const addUsers = () => {
   addFormRef.value.validate(async (valid: boolean) => {
     if (valid) {
-      const { data: res } = await axios.post('users', addForm).catch((err: any) => err)
+      const { data: res } = await axios.post('users', addForm.value).catch((err: any) => err)
       console.log('添加结果', res)
       if (res.meta.status !== 201) return ElMessage.warning('添加用户失败')
       else {
@@ -244,7 +245,7 @@ const addUsers = () => {
   })
 }
 
-//编辑表格
+// 编辑用户
 const editForm = ref({ id: 0, username: '', role_id: 0, mobile: '', email: '' })
 const editFormRef: Ref<any> = ref(null)
 const editFormRule = {
@@ -268,15 +269,6 @@ const doEditForm = async (id: number) => {
   editorDialogVisible.value = true
   editForm.value = res.data
 }
-
-//三个按钮button
-const userStateChange = async (state: any) => {
-  const { data: res } = await axios.put(`users/${state.id}/state/${state.mg_state}`).catch((err: any) => err)
-  if (res.meta.status !== 200) {
-    state.mg_state = !state.mg_state
-    return ElMessage.error('更改用户状态失败')
-  }
-}
 const editUsers = () => {
   editFormRef.value.validate(async (valid: any) => {
     if (valid) {
@@ -289,6 +281,15 @@ const editUsers = () => {
       }
     }
   })
+}
+
+// 状态改变按钮 & 删除用户按钮
+const userStateChange = async (state: any) => {
+  const { data: res } = await axios.put(`users/${state.id}/state/${state.mg_state}`).catch((err: any) => err)
+  if (res.meta.status !== 200) {
+    state.mg_state = !state.mg_state
+    return ElMessage.error('更改用户状态失败')
+  }
 }
 const removeUsersById = (id: any) => {
   ElMessageBox.confirm('此操作将永久删除该用户, 是否继续?', '提示', {
@@ -307,7 +308,7 @@ const removeUsersById = (id: any) => {
     })
 }
 
-//获取角色
+// 分配角色
 const userInfo = ref({
   id: 0,
   username: '',
@@ -320,13 +321,12 @@ const userInfo = ref({
 })
 const setRoledialogVisible = ref(false)
 const roleList: Ref<any[]> = ref([]) as any
-let selectedRoleId = ref('')
+const selectedRoleId = ref('')
 const setUserRole = (role: any) => {
   getRole()
   userInfo.value = role
   setRoledialogVisible.value = true
 }
-
 const getRole = async () => {
   const { data: res } = await axios.get('roles').catch((err: any) => err)
   if (res.meta.status !== 200) {

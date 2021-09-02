@@ -40,7 +40,7 @@
       >
       </el-pagination>
     </el-card>
-    <el-dialog title="预览图片" v-model="priviewShow" width="50%" @close="closePreview">
+    <el-dialog title="预览图片" v-model="priviewShow" width="40%" @close="closePreview">
       <img :src="priviewURL" alt="" />
     </el-dialog>
   </div>

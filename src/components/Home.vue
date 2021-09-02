@@ -3,22 +3,25 @@
     <el-header>
       <div>
         <img src="../assets/img/logo.png" alt="" class="avatar" />
-        <span>电商后台管理系统</span>
+        <span class="title" @click="backWelcome">Yukon-CMS</span>
       </div>
-      <el-button type="info" @click="logout">退出</el-button>
+      <el-button type="danger" size="mini" @click="logout">退出</el-button>
     </el-header>
-    <el-container>
+    <el-container class="content">
       <el-aside :width="isCollapse ? '64px' : '200px'">
-        <div class="fold-aside" @click="foldAlide">|||</div>
+        <div class="fold-aside" @click="foldAlide">
+          <i class="el-icon-s-unfold" v-if="isCollapse"></i>
+          <i class="el-icon-s-fold" v-else></i>
+        </div>
         <el-menu
-          background-color="#545c64"
-          text-color="#fff"
-          active-text-color="#ffca28"
           :unique-opened="true"
           :collapse="isCollapse"
           :collapse-transition="false"
           router
           :default-active="activePath"
+          background-color="#0c2135"
+          text-color="#b7bdc3"
+          active-text-color="#0a60bd"
         >
           <el-sub-menu :index="item.id + ''" v-for="(item, indey) in menuList" :key="item.id">
             <template #title>
@@ -39,7 +42,7 @@
           </el-sub-menu>
         </el-menu>
       </el-aside>
-      <el-main>
+      <el-main :style="{ left: foldWidth }">
         <RouterView />
       </el-main>
     </el-container>
@@ -47,11 +50,19 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, inject, Ref } from 'vue'
+import { ref, inject, Ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import router from '../router'
 const axios: any = inject('axios')
 const iconList = ref(['icon-user', 'icon-tijikongjian', 'icon-shangpin', 'icon-danju', 'icon-baobiao'])
+
+// 返回首页
+const backWelcome = () => {
+  router.push('welcome')
+  activePath.value = ''
+  isCollapse.value = false
+}
+
 //获取菜单项
 const menuList: Ref<any[]> = ref([])
 const getMenuList = async () => {
@@ -62,13 +73,17 @@ const getMenuList = async () => {
 getMenuList()
 //默认点亮的标签
 let isCollapse = ref(false)
-const activePath = ref('/users')
+const activePath = ref('')
 if (window.sessionStorage.getItem('pathState')) {
   activePath.value = window.sessionStorage.getItem('pathState') as string
 }
 const foldAlide = () => {
   isCollapse.value = !isCollapse.value
 }
+const foldWidth = computed(() => {
+  return isCollapse.value ? '64px' : '200px'
+})
+
 const saveNavState = (path: string) => {
   window.sessionStorage.setItem('pathState', path)
   activePath.value = path
@@ -82,52 +97,67 @@ const logout = () => {
 </script>
 
 <style scoped lang="less">
-.home {
-  height: 100%;
-}
-.avatar {
-  height: 60px;
-}
 .el-header {
-  background-color: rgb(54, 61, 64);
+  position: fixed;
+  width: 100%;
+  background-color: #0c2135;
   display: flex;
   justify-content: space-between;
   color: #fff;
   font-size: 20px;
   align-items: center;
-  padding: 0;
+  padding: 0 0 0 22px;
+  z-index: 10;
 
   div {
-    padding-left: 0;
     display: flex;
     align-items: center;
     span {
       padding-left: 20px;
+      a {
+        color: white;
+      }
+    }
+    .title {
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .avatar {
+      height: 40px;
+      border-radius: 40px;
     }
   }
   .el-button {
     position: relative;
-    right: 20px;
-    // margin-right: 20px;
+    right: 10px;
   }
 }
+.content {
+  width: 100vw;
+}
 .el-aside {
-  background-color: rgb(49, 55, 67);
+  top: 60px;
+  position: fixed;
+  background-color: #0c2135;
+  height: 100%;
+
   .fold-aside {
-    background-color: #4a5064;
-    letter-spacing: 0.2em;
+    color: #ffffff;
     text-align: center;
-    color: #fff;
-    line-height: 24px;
-    cursor: pointer;
-    font-size: 10px;
+    font-size: 20px;
   }
   .el-menu {
     border-right: 0px;
   }
 }
 .el-main {
+  padding-top: 16px;
+  position: absolute;
+  top: 60px;
+  bottom: 0px;
+  right: 0px;
   background-color: rgb(233, 237, 241);
+  overflow-x: hidden;
 }
 .iconfont {
   padding-right: 12px;

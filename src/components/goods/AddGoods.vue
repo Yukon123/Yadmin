@@ -77,7 +77,7 @@
         </el-tabs>
       </el-form>
     </el-card>
-    <el-dialog title="预览图片" v-model="priviewShow" width="50%" @close="closePreview">
+    <el-dialog title="预览图片" v-model="priviewShow" width="40%" @close="closePreview">
       <img :src="priviewURL" alt="" />
     </el-dialog>
   </div>
@@ -169,7 +169,6 @@ const loadHeader = ref({ Authorization: window.sessionStorage.getItem('token') }
 const priviewShow = ref(false)
 const priviewURL = ref('')
 const imgPreview = (file: any) => {
-  console.log(file)
   priviewURL.value = file.response.data.url
   priviewShow.value = true
 }
@@ -178,15 +177,12 @@ const closePreview = () => {
   priviewURL.value = ''
 }
 const imgRemove = (file: any) => {
-  console.log(file)
   const i = addGoodForm.value.pics.findIndex((item: any) => item.pic === file.response.data.tmp_path)
   addGoodForm.value.pics.splice(i, 1)
-  console.log('删除成功数组', addGoodForm.value.pics)
 }
 const imgSuccess = (res: any) => {
   let foo = { pic: res.data.tmp_path }
   addGoodForm.value.pics.push(foo)
-  console.log('上传成功数组', addGoodForm.value.pics)
 }
 
 // 添加商品
@@ -206,9 +202,7 @@ const addGood = () => {
       addGoodForm.value.goods_cat = addGoodForm.value.goods_cat_arr.join(',')
       addGoodForm.value.attrs.push(...onlyAttrList.value)
       addGoodForm.value.attrs.push(...manyParamsList.value)
-      console.log('添加表格', addGoodForm.value)
-      let { data: res } = await axios.post('goods', addGoodForm.value).catch((err: any) => console.log(err))
-      console.log('添加商品', res)
+      await axios.post('goods', addGoodForm.value).catch((err: any) => err)
       ElMessage.success('添加商品成功')
       router.push('/goods')
     }

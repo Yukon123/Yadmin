@@ -105,7 +105,7 @@
         </el-tab-pane>
       </el-tabs>
     </el-card>
-    <el-dialog :title="dialogTitle" v-model="formVisible" width="50%" @close="colseForm">
+    <el-dialog :title="dialogTitle" v-model="formVisible" width="40%" @close="colseForm">
       <el-form :model="formData" :rules="addFormRules" ref="formRef" label-width="100px">
         <el-form-item :label="titleTail" prop="attr_name">
           <el-input v-model="formData['attr_name']"></el-input>
@@ -184,7 +184,6 @@ const getParamsList = async () => {
       params: { sel: activeTabName.value },
     })
     .catch((err: any) => err)
-  console.log('获取动静态参数列表', res)
   if (res.meta.status !== 200) {
     return ElMessage.error('获取参数信息失败')
   }
@@ -259,7 +258,6 @@ const confirmForm = () => {
       let { data: res } = await axios
         .post(`categories/${attrId.value}/attributes`, formData.value)
         .catch((err: any) => err)
-      console.log('添加参数', res)
       if (res.meta.status !== 201) {
         return ElMessage.error('添加参数失败')
       } else ElMessage.success('添加参数成功')
@@ -292,7 +290,6 @@ const putAttrVal = async (row: any) => {
       attr_vals: row.attr_vals.join(),
     })
     .catch((err: any) => err)
-  console.log(res)
   if (res.meta.status !== 200) {
     row.isShowInput = false
     return ElMessage.error('修改参数项失败')
@@ -314,10 +311,8 @@ const tagInputConfirm = (row: any) => {
 
 const tagInputRef: any = ref(1)
 const showInput = async (row: any) => {
-  console.log('click')
   row.isShowInput = true
-  await nextTick().catch((err: any) => console.log(err))
-  console.log(tagInputRef)
+  await nextTick().catch((err: any) => err)
   tagInputRef.value.focus()
 }
 const closeTag = (row: any, index: string | number | symbol) => {

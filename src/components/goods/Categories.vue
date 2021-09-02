@@ -52,7 +52,7 @@
       >
       </el-pagination>
     </el-card>
-    <el-dialog title="添加分类" v-model="addCatedialogVisible" width="50%" @close="addCateDialogClose">
+    <el-dialog title="添加分类" v-model="addCatedialogVisible" width="40%" @close="addCateDialogClose">
       <el-form ref="addCateFormRef" :model="addCateForm" label-width="120px" :rules="addCateFormRules">
         <el-form-item label="分类名称:" prop="cat_name">
           <el-input v-model="addCateForm.cat_name"></el-input>
@@ -77,7 +77,7 @@
         </span>
       </template>
     </el-dialog>
-    <el-dialog title="编辑分类" v-model="editorDialogVisible" width="50%" @close="editDialogClose">
+    <el-dialog title="编辑分类" v-model="editorDialogVisible" width="40%" @close="editDialogClose">
       <el-form :model="editForm" :rules="editFormRule" ref="editFormRef" label-width="90px" status-icon>
         <el-form-item label="分类名称" prop="cat_name">
           <el-input v-model="editForm.cat_name"></el-input>

@@ -43,7 +43,7 @@
       >
       </el-pagination>
     </el-card>
-    <el-dialog title="修改地址" v-model="editAddressShow" width="70%" @close="cancelAddress">
+    <el-dialog title="修改地址" v-model="editAddressShow" width="40%" @close="cancelAddress">
       <el-form :model="editAddressForm" :rules="editAddressRules" ref="editAddressRef" label-width="100px">
         <el-form-item label="省市区/县" prop="county">
           <el-cascader :options="cityOptions" v-model="editAddressForm.county"> </el-cascader>
@@ -59,7 +59,7 @@
         </span>
       </template>
     </el-dialog>
-    <el-dialog title="修改订单" v-model="editOrderVisible" width="70%" @close="closeEditOrders">
+    <el-dialog title="修改订单" v-model="editOrderVisible" width="40%" @close="closeEditOrders">
       <el-form :model="editOrderForm" :rules="editOrderRules" ref="editOrdersRef" label-width="100px">
         <el-form-item label="订单编号" prop="order_number">
           <el-input v-model="editOrderForm.order_number"></el-input>
@@ -67,8 +67,8 @@
         <el-form-item label="订单价格" prop="order_price">
           <el-input v-model.number="editOrderForm.order_price"></el-input>
         </el-form-item>
-        <el-form-item label="是否付款" prop="pay_status">
-          <el-input v-model="editOrderForm.pay_status"></el-input>
+        <el-form-item label="是否付款" prop="pay_status_word">
+          <el-input v-model="editOrderForm.pay_status_word"></el-input>
         </el-form-item>
         <el-form-item label="是否发货" prop="is_send">
           <el-input v-model.number="editOrderForm.is_send"></el-input>
@@ -79,8 +79,8 @@
           <el-button @click="closeEditOrders">取 消</el-button>
           <el-button type="primary" @click="comfirmEditOrders">确 定</el-button>
         </span>
-      </template></el-dialog
-    >
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -127,7 +127,7 @@ const getOrderList = async () => {
     .get('orders', {
       params: getOrderParams.value,
     })
-    .catch((err: any) => console.log(err))
+    .catch((err: any) => err)
   if (res.meta.status !== 200) {
     return ElMessage.error(res.meta.msg)
   }
@@ -137,13 +137,11 @@ const getOrderList = async () => {
     const date = new Date(value.create_time)
     value.create_time = formatDate(date, 'yyyy-MM-dd hh:mm:ss')
   })
-  console.log('列表', orderList.value)
 }
 getOrderList()
 
 // 查询订单
 const queryOrder = () => {
-  console.log(getOrderParams.value.query)
   getOrderList()
 }
 
@@ -172,7 +170,7 @@ const cancelAddress = () => {
 
 // 修改订单
 
-const editOrderForm = ref({
+const editOrderForm: any = ref({
   user_id: 0,
   order_id: 0,
   order_number: '',
@@ -180,31 +178,30 @@ const editOrderForm = ref({
   order_pay: '',
   is_send: '',
   pay_status: '',
+  pay_status_word: '',
+  order_pay_word: '',
 })
 const editOrderVisible = ref(false)
 const editOrderRules = ref({
   order_number: [{ required: true, message: '请输入商品数量', trigger: 'blur' }],
   order_price: [{ required: true, message: '请输入商品价格', trigger: 'blur' }],
   order_pay: [{ required: true, message: '请输入支付方式', trigger: 'blur' }],
-  pay_status: [{ required: true, message: '请输入支付状态', trigger: 'blur' }],
+  pay_status_word: [{ required: true, message: '请输入支付状态', trigger: 'blur' }],
   is_send: [{ required: true, message: '请输入发货状态', trigger: 'blur' }],
 })
 const editOrdersRef: any = ref(null)
 const editOrder = async (row: any) => {
   editOrderVisible.value = true
-  const { data: res } = await axios.get(`orders/${row.order_id}`).catch((err: any) => console.log(err))
+  const { data: res } = await axios.get(`orders/${row.order_id}`).catch((err: any) => err)
+  res.data.pay_status_word = res.data.pay_status === '0' ? '否' : '是'
   editOrderForm.value = res.data
 }
 const comfirmEditOrders = async () => {
-  console.log('请求参数', editOrderForm.value)
-  const { data: res } = await axios
-    .put(`orders/${editOrderForm.value.order_id}`, editOrderForm.value)
-    .catch((err: any) => console.log(err))
-  console.log('确认修改', res)
-
+  editOrderForm.value.pay_status = editOrderForm.value.pay_status_word === '是' ? 1 : 0
+  editOrderForm.value.is_send = editOrderForm.value.is_send === '是' ? 1 : 0
+  await axios.put(`orders/${editOrderForm.value.order_id}`, editOrderForm.value).catch((err: any) => err)
   ElMessage.success('更新订单成功')
   getOrderList()
-
   editOrderVisible.value = false
 }
 const closeEditOrders = () => {

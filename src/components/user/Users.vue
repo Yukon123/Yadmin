@@ -50,14 +50,14 @@
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
         :current-page="paramsList.pagenum"
-        :page-sizes="[1, 2, 5, 10]"
+        :page-sizes="[5, 10, 15]"
         :page-size="paramsList.pagesize"
         layout="total, sizes, prev, pager, next, jumper"
         :total="total"
       >
       </el-pagination>
     </el-card>
-    <el-dialog title="添加用户" v-model="addDialogVisible" width="50%" @close="addDialogClose">
+    <el-dialog title="添加用户" v-model="addDialogVisible" width="40%" @close="addDialogClose">
       <el-form :model="addForm" :rules="addFormRule" ref="addFormRef" label-width="90px" status-icon>
         <el-form-item label="用户名" prop="username">
           <el-input v-model="addForm.username" auto-complete="on"></el-input>
@@ -82,7 +82,7 @@
         </span>
       </template>
     </el-dialog>
-    <el-dialog title="编辑用户" v-model="editorDialogVisible" width="30%" @close="editDialogClose">
+    <el-dialog title="编辑用户" v-model="editorDialogVisible" width="40%" @close="editDialogClose">
       <el-form :model="editForm" :rules="editFormRule" ref="editFormRef" label-width="70px" status-icon>
         <el-form-item label="用户名" prop="username">
           <el-input v-model="editForm.username" disabled></el-input>
@@ -101,7 +101,7 @@
         </span>
       </template>
     </el-dialog>
-    <el-dialog title="分配角色" v-model="setRoledialogVisible" width="50%" ref="setFormRef" @close="setRoleDiaClose">
+    <el-dialog title="分配角色" v-model="setRoledialogVisible" width="40%" ref="setFormRef" @close="setRoleDiaClose">
       <div>
         <div>当前的用户:{{ userInfo.username }}</div>
         <div>当前的角色:{{ userInfo.role_name }}</div>
@@ -234,7 +234,6 @@ const addUsers = () => {
   addFormRef.value.validate(async (valid: boolean) => {
     if (valid) {
       const { data: res } = await axios.post('users', addForm.value).catch((err: any) => err)
-      console.log('添加结果', res)
       if (res.meta.status !== 201) return ElMessage.warning('添加用户失败')
       else {
         ElMessage.success('添加用户成功')
@@ -348,6 +347,7 @@ const confirmSetRole = async () => {
   setRoledialogVisible.value = false
   getUserList()
 }
+const setFormRef = ref(null) as any
 const setRoleDiaClose = () => {
   userInfo.value = {
     id: 0,
@@ -360,6 +360,7 @@ const setRoleDiaClose = () => {
     role_name: '',
   }
   selectedRoleId.value = ''
+  setFormRef.value.resetFields()
 }
 </script>
 <style lang="less" scoped>

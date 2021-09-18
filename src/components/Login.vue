@@ -3,7 +3,7 @@
     <div class="login-item">
       <div class="item-image">
         <a href="https://github.com/Yukon123" target="__blank">
-          <img src="../assets/img/logo.png" alt="" />
+          <img src="../assets/img/logo.jpg" alt="" class="img" />
         </a>
       </div>
       <el-form label-width="0px" class="login-form" :model="form" :rules="rules" ref="loginRef">
@@ -84,7 +84,7 @@ const loginCheck = () => {
       left: 50%;
       transform: translate(-50%, -50%);
       background-color: #fff;
-      img {
+      .img {
         width: 100%;
         height: 100%;
         border-radius: 50%;

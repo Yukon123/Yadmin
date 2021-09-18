@@ -171,7 +171,7 @@ src
 ├─ main.ts
 ├─ router
 │    └─ index.ts
-└─ shims-vue.d.ts`,
+└─ shims-vue.d.ts`.trim(),
 )
 const depData = ref([
   {

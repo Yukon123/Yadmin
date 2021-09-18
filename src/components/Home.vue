@@ -2,7 +2,7 @@
   <el-container class="home">
     <el-header>
       <div>
-        <img src="../assets/img/logo.png" alt="" class="avatar" />
+        <img src="../assets/img/logo.jpg" alt="" class="avatar" />
         <span class="title" @click="backWelcome">Yukon-CMS</span>
       </div>
       <el-button type="danger" size="mini" @click="logout">退出</el-button>

@@ -66,7 +66,6 @@
             :style="{ width: '100%' }"
             clearable
             placeholder="请选择分类"
-            ref="cascaderRef"
           ></el-cascader>
         </el-form-item>
       </el-form>
